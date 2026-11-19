@@ -113,11 +113,11 @@ public class OnlineSearchFragment extends Fragment {
     }
 
     public static OnlineSearchFragment newEpisodeSearchInstance() {
-        OnlineSearchFragment fragment = new OnlineSearchFragment();
         Bundle arguments = new Bundle();
         arguments.putString(ARG_SEARCHER, CombinedSearcher.class.getName());
         arguments.putBoolean(ARG_DEFAULT_EPISODE_SEARCH, true);
         arguments.putBoolean(ARG_TOP_LEVEL, true);
+        OnlineSearchFragment fragment = new OnlineSearchFragment();
         fragment.setArguments(arguments);
         return fragment;
     }
