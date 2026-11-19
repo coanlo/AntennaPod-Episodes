@@ -37,7 +37,7 @@ public class FyydEpisodeSearcher implements EpisodeSearcher {
     @Override
     public Single<List<EpisodeSearchResult>> search(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return Single.just(Collections.emptyList())
+            return Single.just(Collections.<EpisodeSearchResult>emptyList())
                     .observeOn(AndroidSchedulers.mainThread());
         }
         return Single.fromCallable(() -> fetchRawEpisodes(query))

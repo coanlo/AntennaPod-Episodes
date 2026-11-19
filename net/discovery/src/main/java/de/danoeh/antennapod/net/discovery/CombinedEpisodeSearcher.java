@@ -25,7 +25,7 @@ public class CombinedEpisodeSearcher implements EpisodeSearcher {
     @Override
     public Single<List<EpisodeSearchResult>> search(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return Single.just(Collections.emptyList())
+            return Single.just(Collections.<EpisodeSearchResult>emptyList())
                     .observeOn(AndroidSchedulers.mainThread());
         }
         Single<ProviderResult> itunesSingle = itunesSearcher.search(query)
@@ -56,10 +56,10 @@ public class CombinedEpisodeSearcher implements EpisodeSearcher {
         })
                 .flatMap(combined -> {
                     if (combined.error != null) {
-                        return Single.error(combined.error);
+                        return Single.<List<EpisodeSearchResult>>error(combined.error);
                     }
                     return Single.just(combined.results != null
-                            ? combined.results : Collections.emptyList());
+                            ? combined.results : Collections.<EpisodeSearchResult>emptyList());
                 })
                 .observeOn(AndroidSchedulers.mainThread());
     }
