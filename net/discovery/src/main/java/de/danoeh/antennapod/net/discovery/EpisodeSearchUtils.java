@@ -43,6 +43,48 @@ final class EpisodeSearchUtils {
         }
     }
 
+    static boolean matchesLanguage(@Nullable String itemLanguage, @Nullable String targetIsoLanguage) {
+        if (targetIsoLanguage == null || targetIsoLanguage.isEmpty()) {
+            return true;
+        }
+        if (itemLanguage == null || itemLanguage.trim().isEmpty()) {
+            return true;
+        }
+        String normalizedItem = itemLanguage.trim().toLowerCase(Locale.ROOT);
+        String normalizedTarget = targetIsoLanguage.trim().toLowerCase(Locale.ROOT);
+        return normalizedItem.equals(normalizedTarget)
+                || normalizedItem.startsWith(normalizedTarget + "-")
+                || normalizedItem.startsWith(normalizedTarget + "_");
+    }
+
+    static float computeQueryMatchBonus(@Nullable String query, @Nullable String title,
+                                        @Nullable String podcastTitle) {
+        if (query == null || query.trim().isEmpty()) {
+            return 0f;
+        }
+        String normalizedQuery = query.trim().toLowerCase(Locale.ROOT);
+        String normalizedTitle = title == null ? "" : title.toLowerCase(Locale.ROOT);
+        String normalizedPodcast = podcastTitle == null ? "" : podcastTitle.toLowerCase(Locale.ROOT);
+        float bonus = 0f;
+        if (normalizedTitle.contains(normalizedQuery)) {
+            bonus += 0.35f;
+        }
+        String[] tokens = normalizedQuery.split("\\s+");
+        if (tokens.length > 1) {
+            int matchedInTitle = 0;
+            for (String token : tokens) {
+                if (token.length() >= 2 && normalizedTitle.contains(token)) {
+                    matchedInTitle++;
+                }
+            }
+            bonus += 0.25f * ((float) matchedInTitle / tokens.length);
+        }
+        if (normalizedPodcast.contains(normalizedQuery)) {
+            bonus += 0.1f;
+        }
+        return bonus;
+    }
+
     @Nullable
     static Date parseIsoDate(@Nullable String raw) {
         if (raw == null) {

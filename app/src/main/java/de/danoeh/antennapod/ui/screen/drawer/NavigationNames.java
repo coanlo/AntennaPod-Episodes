@@ -3,6 +3,7 @@ package de.danoeh.antennapod.ui.screen.drawer;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.ui.discovery.OnlineSearchFragment;
 import de.danoeh.antennapod.ui.screen.FavoritesFragment;
 import de.danoeh.antennapod.ui.screen.AddFeedFragment;
 import de.danoeh.antennapod.ui.screen.AllEpisodesFragment;
@@ -37,6 +38,8 @@ public abstract class NavigationNames {
                 return R.drawable.ic_add;
             case FavoritesFragment.TAG:
                 return R.drawable.ic_star;
+            case OnlineSearchFragment.TAG_EPISODE_SEARCH:
+                return R.drawable.ic_search;
             default:
                 return 0;
         }
@@ -64,6 +67,8 @@ public abstract class NavigationNames {
                 return R.string.add_feed_label;
             case FavoritesFragment.TAG:
                 return R.string.favorite_episodes_label;
+            case OnlineSearchFragment.TAG_EPISODE_SEARCH:
+                return R.string.episode_search_label;
             case NavListAdapter.SUBSCRIPTION_LIST_TAG:
                 return R.string.subscriptions_list_label;
             default:
@@ -93,6 +98,8 @@ public abstract class NavigationNames {
                 return R.string.add_feed_label_short;
             case FavoritesFragment.TAG:
                 return R.string.favorite_episodes_label_short;
+            case OnlineSearchFragment.TAG_EPISODE_SEARCH:
+                return R.string.search_label;
             case NavListAdapter.SUBSCRIPTION_LIST_TAG:
                 return R.string.subscriptions_list_label;
             default:
@@ -120,6 +127,8 @@ public abstract class NavigationNames {
                 return R.id.bottom_navigation_subscriptions;
             case StatisticsFragment.TAG:
                 return R.id.bottom_navigation_statistics;
+            case OnlineSearchFragment.TAG_EPISODE_SEARCH:
+                return R.id.bottom_navigation_episode_search;
             case HomeFragment.TAG: // fall-through
             default:
                 return R.id.bottom_navigation_home;
@@ -145,6 +154,8 @@ public abstract class NavigationNames {
             return SubscriptionFragment.TAG;
         } else if (id == R.id.bottom_navigation_statistics) {
             return StatisticsFragment.TAG;
+        } else if (id == R.id.bottom_navigation_episode_search) {
+            return OnlineSearchFragment.TAG_EPISODE_SEARCH;
         } else if (id == R.id.bottom_navigation_home) {
             return HomeFragment.TAG;
         }

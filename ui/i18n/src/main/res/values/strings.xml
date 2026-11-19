@@ -893,6 +893,16 @@
     <string name="search_podcast_hint">Search podcast…</string>
     <string name="search_episode_hint">Search episode…</string>
     <string name="search_podcasts_tab">Podcasts</string>
+    <string name="episode_search_label">Episode search</string>
+    <string name="episode_sort_relevance">Relevance</string>
+    <string name="episode_sort_newest">Newest first</string>
+    <string name="episode_sort_oldest">Oldest first</string>
+    <string name="episode_sort_popular">Popular</string>
+    <string name="episode_sort_shortest">Shortest first</string>
+    <string name="episode_sort_longest">Longest first</string>
+    <string name="episode_language_title">Language</string>
+    <string name="episode_language_system">System (%1$s)</string>
+    <string name="episode_language_all">All languages</string>
     <string name="search_itunes_label">Search Apple Podcasts</string>
     <string name="search_podcastindex_label">Search Podcast Index</string>
     <string name="search_fyyd_label">Search fyyd</string>

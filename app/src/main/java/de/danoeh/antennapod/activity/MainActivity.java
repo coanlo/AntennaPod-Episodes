@@ -60,6 +60,7 @@ import de.danoeh.antennapod.ui.common.NavigationToolbarActivity;
 import de.danoeh.antennapod.ui.common.ThemeSwitcher;
 import de.danoeh.antennapod.ui.common.ThemeUtils;
 import de.danoeh.antennapod.ui.discovery.DiscoveryFragment;
+import de.danoeh.antennapod.ui.discovery.OnlineSearchFragment;
 import de.danoeh.antennapod.ui.screen.FavoritesFragment;
 import de.danoeh.antennapod.ui.screen.AddFeedFragment;
 import de.danoeh.antennapod.ui.screen.AllEpisodesFragment;
@@ -452,6 +453,9 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
                 break;
             case DiscoveryFragment.TAG:
                 fragment = new DiscoveryFragment();
+                break;
+            case OnlineSearchFragment.TAG_EPISODE_SEARCH:
+                fragment = OnlineSearchFragment.newEpisodeSearchInstance();
                 break;
             default:
                 // default to home screen

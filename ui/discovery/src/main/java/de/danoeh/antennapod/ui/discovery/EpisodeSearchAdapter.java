@@ -13,6 +13,7 @@ import com.bumptech.glide.load.resource.bitmap.FitCenter;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import de.danoeh.antennapod.net.discovery.EpisodeSearchResult;
+import de.danoeh.antennapod.ui.common.Converter;
 import de.danoeh.antennapod.ui.common.DateFormatter;
 import de.danoeh.antennapod.ui.common.ImagePlaceholder;
 
@@ -20,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 public class EpisodeSearchAdapter extends ArrayAdapter<EpisodeSearchResult> {
+    private static final long ONE_MINUTE_MS = 60L * 1000L;
     private final Context context;
     private final List<EpisodeSearchResult> data;
 
@@ -53,9 +55,13 @@ public class EpisodeSearchAdapter extends ArrayAdapter<EpisodeSearchResult> {
         }
 
         Date releaseDate = episode.getReleaseDate();
-        if (releaseDate != null) {
-            viewHolder.dateView.setText(DateFormatter.formatAbbrev(context, releaseDate));
-            viewHolder.dateView.setContentDescription(DateFormatter.formatForAccessibility(releaseDate));
+        String dateText = releaseDate != null ? DateFormatter.formatAbbrev(context, releaseDate) : "";
+        String durationText = formatDuration(episode.durationMs);
+        String metaText = joinMetadata(dateText, durationText);
+        if (!metaText.isEmpty()) {
+            viewHolder.dateView.setText(metaText);
+            String accessibleDate = releaseDate != null ? DateFormatter.formatForAccessibility(releaseDate) : "";
+            viewHolder.dateView.setContentDescription(joinMetadata(accessibleDate, durationText));
             viewHolder.dateView.setVisibility(View.VISIBLE);
         } else {
             viewHolder.dateView.setVisibility(View.GONE);
@@ -72,6 +78,26 @@ public class EpisodeSearchAdapter extends ArrayAdapter<EpisodeSearchResult> {
                 .into(viewHolder.coverView);
 
         return view;
+    }
+
+    private String formatDuration(long durationMs) {
+        if (durationMs <= 0L) {
+            return "";
+        }
+        if (durationMs < ONE_MINUTE_MS) {
+            return Converter.getDurationStringShort((int) durationMs, false);
+        }
+        return Converter.getDurationStringLocalized(context, durationMs);
+    }
+
+    private static String joinMetadata(String first, String second) {
+        if (first.isEmpty()) {
+            return second;
+        }
+        if (second.isEmpty()) {
+            return first;
+        }
+        return first + " · " + second;
     }
 
     static class EpisodeViewHolder {
