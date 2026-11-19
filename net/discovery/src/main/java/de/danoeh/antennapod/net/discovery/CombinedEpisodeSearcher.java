@@ -97,7 +97,7 @@ public class CombinedEpisodeSearcher implements EpisodeSearcher {
             }
         }
 
-        entries.sort((first, second) -> Float.compare(second.score, first.score));
+        Collections.sort(entries, (first, second) -> Float.compare(second.score, first.score));
         List<EpisodeSearchResult> merged = new ArrayList<>(entries.size());
         for (RankedEntry entry : entries) {
             merged.add(entry.result);
