@@ -722,7 +722,11 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
                 if (intent.getBooleanExtra(MainActivityStarter.EXTRA_CLEAR_BACK_STACK, true)) {
                     loadFeedFragmentById(feedId, args);
                 } else {
-                    loadChildFragment(FeedItemlistFragment.newInstance(feedId));
+                    Fragment fragment = FeedItemlistFragment.newInstance(feedId);
+                    if (args != null) {
+                        fragment.setArguments(args);
+                    }
+                    loadChildFragment(fragment);
                 }
             }
             sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);

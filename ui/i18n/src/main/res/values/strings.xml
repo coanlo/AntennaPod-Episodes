@@ -891,6 +891,8 @@
 
     <!-- Add podcast fragment -->
     <string name="search_podcast_hint">Search podcast…</string>
+    <string name="search_episode_hint">Search episode…</string>
+    <string name="search_podcasts_tab">Podcasts</string>
     <string name="search_itunes_label">Search Apple Podcasts</string>
     <string name="search_podcastindex_label">Search Podcast Index</string>
     <string name="search_fyyd_label">Search fyyd</string>

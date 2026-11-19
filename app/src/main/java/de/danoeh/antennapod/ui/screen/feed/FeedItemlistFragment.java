@@ -3,6 +3,7 @@ package de.danoeh.antennapod.ui.screen.feed;
 import android.content.res.Configuration;
 import android.graphics.LightingColorFilter;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
@@ -16,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -74,6 +76,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -84,7 +87,11 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         MaterialToolbar.OnMenuItemClickListener, EpisodeItemListAdapter.OnSelectModeListener {
     public static final String TAG = "ItemlistFragment";
     private static final String ARGUMENT_FEED_ID = "argument.de.danoeh.antennapod.feed_id";
+    private static final String ARGUMENT_EPISODE_TITLE = "argument.de.danoeh.antennapod.episode_title";
+    private static final String ARGUMENT_EPISODE_URL = "argument.de.danoeh.antennapod.episode_url";
     private static final String KEY_UP_ARROW = "up_arrow";
+    private static final String KEY_HIGHLIGHTED_EPISODE_ID = "highlighted_episode_id";
+    private static final String KEY_HAS_SCROLLED_TO_TARGET = "has_scrolled_to_target";
     protected static final int EPISODES_PER_PAGE = 150;
     protected int page = 1;
     protected boolean isLoadingMore = false;
@@ -99,6 +106,11 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
     private Disposable disposable;
     private FeedItemListFragmentBinding viewBinding;
     private Pair<Integer, Integer> scrollPosition = null;
+    private String targetEpisodeTitle;
+    private String targetEpisodeUrl;
+    private long highlightedEpisodeId = -1;
+    private boolean hasScrolledToTarget = false;
+    private boolean hasRefreshedForTarget = false;
 
     /**
      * Creates new ItemlistFragment which shows the Feeditems of a specific
@@ -115,6 +127,17 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         return i;
     }
 
+    public static FeedItemlistFragment newInstance(long feedId, @Nullable String episodeTitle,
+                                                   @Nullable String episodeUrl) {
+        FeedItemlistFragment fragment = newInstance(feedId);
+        Bundle args = fragment.getArguments();
+        if (args != null) {
+            args.putString(ARGUMENT_EPISODE_TITLE, episodeTitle);
+            args.putString(ARGUMENT_EPISODE_URL, episodeUrl);
+        }
+        return fragment;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,6 +145,12 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         Bundle args = getArguments();
         Objects.requireNonNull(args);
         feedID = args.getLong(ARGUMENT_FEED_ID);
+        targetEpisodeTitle = args.getString(ARGUMENT_EPISODE_TITLE);
+        targetEpisodeUrl = args.getString(ARGUMENT_EPISODE_URL);
+        if (savedInstanceState != null) {
+            highlightedEpisodeId = savedInstanceState.getLong(KEY_HIGHLIGHTED_EPISODE_ID, -1);
+            hasScrolledToTarget = savedInstanceState.getBoolean(KEY_HAS_SCROLLED_TO_TARGET, false);
+        }
     }
 
     @Nullable
@@ -262,6 +291,8 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putBoolean(KEY_UP_ARROW, displayUpArrow);
+        outState.putLong(KEY_HIGHLIGHTED_EPISODE_ID, highlightedEpisodeId);
+        outState.putBoolean(KEY_HAS_SCROLLED_TO_TARGET, hasScrolledToTarget);
         super.onSaveInstanceState(outState);
     }
 
@@ -645,6 +676,21 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
         disposable = Observable.fromCallable(
                 () -> {
                     feed = DBReader.getFeed(feedID, true, 0, page * EPISODES_PER_PAGE);
+                    if (feed == null) {
+                        throw new IllegalStateException("Feed not found: " + feedID);
+                    }
+                    if (hasTargetEpisode() && !hasScrolledToTarget
+                            && findTargetEpisodePosition(feed.getItems()) < 0
+                            && feed.getItems().size() >= page * EPISODES_PER_PAGE) {
+                        Feed fullFeed = DBReader.getFeed(feedID, true, 0, Integer.MAX_VALUE);
+                        if (fullFeed != null && fullFeed.getItems() != null) {
+                            int fullPos = findTargetEpisodePosition(fullFeed.getItems());
+                            if (fullPos >= 0) {
+                                page = (fullPos / EPISODES_PER_PAGE) + 1;
+                                feed = DBReader.getFeed(feedID, true, 0, page * EPISODES_PER_PAGE);
+                            }
+                        }
+                    }
                     int count = DBReader.getFeedEpisodeCount(feed.getId(), feed.getItemFilter());
                     return new Pair<>(feed, count);
                 })
@@ -652,7 +698,18 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     result -> {
-                        hasMoreItems = !(page == 1 && feed.getItems().size() < EPISODES_PER_PAGE);
+                        int targetScrollPos = -1;
+                        if (hasTargetEpisode() && !hasScrolledToTarget) {
+                            targetScrollPos = findTargetEpisodePosition(feed.getItems());
+                            if (targetScrollPos >= 0) {
+                                highlightedEpisodeId = feed.getItems().get(targetScrollPos).getId();
+                                hasScrolledToTarget = true;
+                            } else if (feed.getState() == Feed.STATE_NOT_SUBSCRIBED && !hasRefreshedForTarget) {
+                                hasRefreshedForTarget = true;
+                                FeedUpdateManager.getInstance().runOnce(getContext(), feed);
+                            }
+                        }
+                        hasMoreItems = !(feed.getItems().size() < page * EPISODES_PER_PAGE);
                         swipeActions.setFilter(feed.getItemFilter());
                         refreshHeaderView();
                         viewBinding.progressBar.setVisibility(View.GONE);
@@ -660,8 +717,13 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
                         adapter.updateItems(feed.getItems());
                         adapter.setTotalNumberOfItems(result.second);
                         updateToolbar();
-                        viewBinding.recyclerView.restoreScrollPosition(scrollPosition);
-                        scrollPosition = null;
+                        if (targetScrollPos >= 0) {
+                            scrollToTargetEpisode(targetScrollPos);
+                            scrollPosition = null;
+                        } else {
+                            viewBinding.recyclerView.restoreScrollPosition(scrollPosition);
+                            scrollPosition = null;
+                        }
                     }, error -> {
                         feed = null;
                         refreshHeaderView();
@@ -670,6 +732,83 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
                         updateToolbar();
                         Log.e(TAG, Log.getStackTraceString(error));
                     });
+    }
+
+    private boolean hasTargetEpisode() {
+        return !TextUtils.isEmpty(targetEpisodeTitle) || !TextUtils.isEmpty(targetEpisodeUrl);
+    }
+
+    private void scrollToTargetEpisode(int targetPos) {
+        viewBinding.recyclerView.post(() -> {
+            if (viewBinding == null) {
+                return;
+            }
+            viewBinding.appBar.setExpanded(false, false);
+            RecyclerView.LayoutManager layoutManager = viewBinding.recyclerView.getLayoutManager();
+            if (layoutManager instanceof LinearLayoutManager) {
+                int offset = targetPos > 0 ? (int) (32 * getResources().getDisplayMetrics().density) : 0;
+                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(targetPos, offset);
+            } else {
+                viewBinding.recyclerView.scrollToPosition(targetPos);
+            }
+        });
+    }
+
+    private int findTargetEpisodePosition(@Nullable List<FeedItem> items) {
+        if (items == null || items.isEmpty()) {
+            return -1;
+        }
+        String normalizedTargetUrl = normalizeEpisodeUrl(targetEpisodeUrl);
+        if (!normalizedTargetUrl.isEmpty()) {
+            for (int i = 0; i < items.size(); i++) {
+                FeedItem item = items.get(i);
+                if (item.getMedia() != null
+                        && normalizedTargetUrl.equals(normalizeEpisodeUrl(item.getMedia().getDownloadUrl()))) {
+                    return i;
+                }
+            }
+        }
+        String normalizedTargetTitle = normalizeEpisodeTitle(targetEpisodeTitle);
+        if (normalizedTargetTitle.isEmpty()) {
+            return -1;
+        }
+        for (int i = 0; i < items.size(); i++) {
+            if (normalizedTargetTitle.equals(normalizeEpisodeTitle(items.get(i).getTitle()))) {
+                return i;
+            }
+        }
+        if (normalizedTargetTitle.length() >= 8) {
+            for (int i = 0; i < items.size(); i++) {
+                String candidateTitle = normalizeEpisodeTitle(items.get(i).getTitle());
+                if (!candidateTitle.isEmpty() && (candidateTitle.contains(normalizedTargetTitle)
+                        || normalizedTargetTitle.contains(candidateTitle))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static String normalizeEpisodeUrl(@Nullable String url) {
+        if (url == null) {
+            return "";
+        }
+        String value = url.trim().toLowerCase(Locale.ROOT)
+                .replace("?_from=fyyd.de", "")
+                .replace("&_from=fyyd.de", "");
+        if (value.startsWith("https://")) {
+            value = value.substring("https://".length());
+        } else if (value.startsWith("http://")) {
+            value = value.substring("http://".length());
+        }
+        return value;
+    }
+
+    private static String normalizeEpisodeTitle(@Nullable String title) {
+        if (title == null) {
+            return "";
+        }
+        return title.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
     }
 
     private void loadMoreItems() {
@@ -740,7 +879,12 @@ public class FeedItemlistFragment extends Fragment implements AdapterView.OnItem
                     .withPlaceholderView(holder.placeholder)
                     .withCoverView(holder.cover)
                     .load();
-            if (feed.getState() != Feed.STATE_SUBSCRIBED) {
+            boolean isHighlighted = highlightedEpisodeId != -1
+                    && holder.getFeedItem().getId() == highlightedEpisodeId;
+            if (!inActionMode()) {
+                holder.itemView.setSelected(isHighlighted);
+            }
+            if (feed.getState() != Feed.STATE_SUBSCRIBED && !isHighlighted) {
                 holder.secondaryActionButton.setVisibility(View.GONE);
             }
         }

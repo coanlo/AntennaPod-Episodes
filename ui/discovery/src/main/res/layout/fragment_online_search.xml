@@ -24,6 +24,16 @@
             app:navigationContentDescription="@string/toolbar_back_button_content_description"
             app:navigationIcon="?homeAsUpIndicator" />
 
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/search_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/colorBackground"
+            android:visibility="gone"
+            app:tabBackground="?attr/selectableItemBackground"
+            app:tabMode="fixed"
+            app:tabGravity="fill" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <GridView

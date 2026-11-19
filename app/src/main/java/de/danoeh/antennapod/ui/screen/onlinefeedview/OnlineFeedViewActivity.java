@@ -66,6 +66,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter.ARG_EPISODE_TITLE;
+import static de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter.ARG_EPISODE_URL;
 import static de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter.ARG_FEEDURL;
 import static de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStarter.ARG_WAS_MANUAL_URL;
 
@@ -80,6 +82,8 @@ import static de.danoeh.antennapod.ui.appstartintent.OnlineFeedviewActivityStart
 public class OnlineFeedViewActivity extends AppCompatActivity {
     private static final String TAG = "OnlineFeedViewActivity";
     private String selectedDownloadUrl;
+    private String targetEpisodeTitle;
+    private String targetEpisodeUrl;
     private Downloader downloader;
     private String username = null;
     private String password = null;
@@ -100,6 +104,9 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
         viewBinding.transparentBackground.setOnClickListener(v -> finish());
         viewBinding.card.setOnClickListener(null);
         viewBinding.card.setCardBackgroundColor(ThemeUtils.getColorFromAttr(this, R.attr.colorSurface));
+
+        targetEpisodeTitle = getIntent().getStringExtra(ARG_EPISODE_TITLE);
+        targetEpisodeUrl = getIntent().getStringExtra(ARG_EPISODE_URL);
 
         String feedUrl = null;
         if (getIntent().hasExtra(ARG_FEEDURL)) {
@@ -179,6 +186,12 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
     private void resetIntent(String url) {
         Intent intent = new Intent();
         intent.putExtra(ARG_FEEDURL, url);
+        if (targetEpisodeTitle != null) {
+            intent.putExtra(ARG_EPISODE_TITLE, targetEpisodeTitle);
+        }
+        if (targetEpisodeUrl != null) {
+            intent.putExtra(ARG_EPISODE_URL, targetEpisodeUrl);
+        }
         setIntent(intent);
     }
 
@@ -366,7 +379,7 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
         }
 
         viewBinding.progressBar.setVisibility(View.GONE);
-        FeedItemlistFragment fragment = FeedItemlistFragment.newInstance(id);
+        FeedItemlistFragment fragment = FeedItemlistFragment.newInstance(id, targetEpisodeTitle, targetEpisodeUrl);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, fragment, FeedItemlistFragment.TAG)
@@ -377,6 +390,11 @@ public class OnlineFeedViewActivity extends AppCompatActivity {
         // feed.getId() is always 0, we have to retrieve the id from the feed list from the database
         MainActivityStarter mainActivityStarter = new MainActivityStarter(this);
         mainActivityStarter.withOpenFeed(feedId);
+        if (!TextUtils.isEmpty(targetEpisodeTitle) || !TextUtils.isEmpty(targetEpisodeUrl)) {
+            Bundle args = FeedItemlistFragment.newInstance(feedId, targetEpisodeTitle, targetEpisodeUrl)
+                    .getArguments();
+            mainActivityStarter.getIntent().putExtra(MainActivityStarter.EXTRA_FRAGMENT_ARGS, args);
+        }
         finish();
         startActivity(mainActivityStarter.getIntent());
     }

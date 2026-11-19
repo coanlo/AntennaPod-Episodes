@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingBottom="8dp">
+
+    <ImageView
+        android:id="@+id/imgvCover"
+        android:layout_width="@dimen/thumbnail_length_itemlist"
+        android:layout_height="@dimen/thumbnail_length_itemlist"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:adjustViewBounds="true"
+        android:importantForAccessibility="no"
+        android:cropToPadding="true"
+        android:scaleType="fitXY"
+        tools:src="@tools:sample/avatars" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/imgvCover"
+        android:layout_toEndOf="@id/imgvCover"
+        android:layout_centerVertical="true"
+        android:orientation="vertical"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp">
+
+        <TextView
+            android:id="@+id/txtvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AntennaPod.TextView.ListItemPrimaryTitle"
+            tools:text="Episode title" />
+
+        <TextView
+            android:id="@+id/txtvPodcast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AntennaPod.TextView.ListItemSecondaryTitle"
+            tools:text="Podcast title" />
+
+        <TextView
+            android:id="@+id/txtvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            style="@style/AntennaPod.TextView.FeedListItemSecondaryTitle"
+            tools:text="Jan 1" />
+
+    </LinearLayout>
+
+</RelativeLayout>
