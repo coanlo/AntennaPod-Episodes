@@ -2,6 +2,7 @@ package de.test.antennapod.ui;
 
 import android.content.Intent;
 import android.os.Build;
+import androidx.test.espresso.Espresso;
 import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -20,6 +21,7 @@ import java.util.Collections;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -70,13 +72,17 @@ public class BottomNavigationTest {
         onView(isRoot()).perform(waitForView(allOf(isDescendantOfA(withId(R.id.toolbar)),
                 withText(R.string.queue_label)), 1000));
 
-        clickBottomNavItem(R.string.inbox_label_short);
-        onView(isRoot()).perform(waitForView(allOf(isDescendantOfA(withId(R.id.toolbar)),
-                withText(R.string.inbox_label)), 1000));
-
         clickBottomNavItem(R.string.subscriptions_label_short);
         onView(isRoot()).perform(waitForView(allOf(isDescendantOfA(withId(R.id.toolbar)),
                 withText(R.string.subscriptions_label)), 1000));
+
+        clickBottomNavItem(R.string.search_label);
+        onView(isRoot()).perform(waitForView(allOf(withId(R.id.episode_filter_bar), isDisplayed()), 1000));
+        Espresso.closeSoftKeyboard();
+
+        clickBottomNavOverflow(R.string.inbox_label);
+        onView(isRoot()).perform(waitForView(allOf(isDescendantOfA(withId(R.id.toolbar)),
+                withText(R.string.inbox_label)), 1000));
 
         clickBottomNavOverflow(R.string.episodes_label);
         onView(isRoot()).perform(waitForView(allOf(isDescendantOfA(withId(R.id.toolbar)),
